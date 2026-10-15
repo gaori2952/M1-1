@@ -52,7 +52,7 @@ data/raw/ 원본 6개
 ```
 
 ```text
-instagram-trend-analysis/
+M1-1/
 ├── analysis.py
 ├── REPORT.md
 ├── README.md
@@ -120,7 +120,7 @@ instagram-trend-analysis/
 
 ## GitHub 제출
 
-저장소: [gaori2952/M1-1](https://github.com/gaori2952/M1-1) — 비공개.
+저장소: [gaori2952/M1-1](https://github.com/gaori2952/M1-1). 현재 공개 범위는 GitHub 저장소 상단의 표시를 확인한다.
 
 저장소에서는 `REPORT.md`와 `images/`, `data/`의 상대 경로를 유지한다. 코드·원본·생성 결과·README·의존성 파일을 함께 올려야 링크와 재현이 모두 동작한다.
 
@@ -131,7 +131,7 @@ git clone https://github.com/gaori2952/M1-1.git
 cd M1-1
 ```
 
-로컬 결과물 폴더에는 제작 과정의 별도 Git 이력을 보관했다. 배포용 ZIP에는 `.git` 이력을 포함하지 않는다. ZIP은 분석 실행에 바로 사용할 수 있으며, 이후 GitHub에 변경을 올릴 때는 위 복제본에서 작업한다.
+로컬 결과물의 `main`은 GitHub의 `origin/main`과 연결했다. 업로드 전 제작 이력은 `local-build` 브랜치에 보존했다. 배포용 ZIP에는 `.git` 이력을 포함하지 않는다. ZIP은 분석 실행에 바로 사용할 수 있으며, 이후 GitHub에 변경을 올릴 때는 위 복제본 또는 연결된 로컬 저장소에서 작업한다.
 
 이 프로젝트에는 개인 계정의 성과가 포함되어 있다. 공개 여부는 소유자가 결정하며, 과제 제출자가 접근해야 한다면 비공개 저장소의 읽기 권한도 함께 확인한다. 데이터 출처·수집 방법과 이용 범위는 [DATA_SOURCE.md](DATA_SOURCE.md)를 참고한다.
 
