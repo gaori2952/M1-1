@@ -121,6 +121,52 @@ def event_windows(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(records, columns=["days", "period", "metric", "start", "end", "n", "mean", "median", "sum"]).set_index(["days", "period", "metric"])
 
 
+def window_summary(frame: pd.DataFrame, start, end) -> dict:
+    """Compare equal calendar windows using ratios of sums, not mean daily ratios."""
+    dates = pd.date_range(start, end, freq="D")
+    values = frame.reindex(dates)[["views", "visits", "follows"]]
+    if len(values) < 3 or values.isna().any().any():
+        raise ValueError("Incomplete comparison window (at least 3 complete days required)")
+    result = dict(start=str(dates[0].date()), end=str(dates[-1].date()), n=len(values))
+    for metric in values:
+        v = values[metric]
+        result.update({f"{metric}_sum": v.sum(), f"{metric}_mean": v.mean(),
+                       f"{metric}_median": v.median(),
+                       f"{metric}_trim_top2_mean": v.sort_values().iloc[:-2].mean()})
+    ratio = lambda numerator, denominator, scale: numerator / denominator * scale if denominator else np.nan
+    result["visits_per1000_views"] = ratio(values.visits.sum(), values.views.sum(), 1000)
+    result["follows_per1000_views"] = ratio(values.follows.sum(), values.views.sum(), 1000)
+    result["follows_per100_visits"] = ratio(values.follows.sum(), values.visits.sum(), 100)
+    trimmed = values.drop(values.views.idxmax())
+    result["follows_per1000_views_without_top_view_day"] = ratio(trimmed.follows.sum(), trimmed.views.sum(), 1000)
+    return result
+
+
+def decision_tables(common: pd.DataFrame) -> dict:
+    before = window_summary(common, "2026-09-09", "2026-09-22")
+    after = window_summary(common, "2026-09-25", "2026-10-08")
+    persistence = []
+    for metric in ["views", "visits", "follows"]:
+        persistence.append(dict(metric=metric, before_median=before[f"{metric}_median"],
+            after_median=after[f"{metric}_median"],
+            before_trim_top2_mean=before[f"{metric}_trim_top2_mean"],
+            after_trim_top2_mean=after[f"{metric}_trim_top2_mean"],
+            after_days_above_before_median=int(common.loc[after["start"]:after["end"], metric].gt(before[f"{metric}_median"]).sum())))
+    surges = []
+    # These are descriptive case windows selected after viewing the series, not experiments.
+    for shift in [-1, 0, 1]:
+        for label, start in [("September", "2026-09-23"), ("October", "2026-10-06")]:
+            start = pd.Timestamp(start) + pd.Timedelta(days=shift)
+            surges.append(dict(episode=label, shift_days=shift,
+                              **window_summary(common, start, start + pd.Timedelta(days=6))))
+    phases = [dict(phase=label, **window_summary(common, start, end)) for label, start, end in [
+        ("August", "2026-08-01", "2026-08-31"),
+        ("September 1-11", "2026-09-01", "2026-09-11"),
+        ("September 12-22", "2026-09-12", "2026-09-22")]]
+    return dict(persistence=pd.DataFrame(persistence), surge_windows=pd.DataFrame(surges),
+                september_phases=pd.DataFrame(phases))
+
+
 def analyze() -> dict:
     series, audit = [], []
     for name, (filename, title, _, _) in METRICS.items():
@@ -168,18 +214,19 @@ def analyze() -> dict:
             last28_without_event_mean=float(values.iloc[-28:].drop(pd.date_range(EVENT_START, EVENT_END), errors="ignore").mean()),
             top5_share_pct=float(values.nlargest(5).sum() / values.sum() * 100) if values.sum() else None)
     return dict(daily=daily, common=common, derived=derived, audit=pd.DataFrame(audit), monthly=monthly,
-                weekday=weekday, correlations=corr, periods=periods, summary=summary)
+                weekday=weekday, correlations=corr, periods=periods, summary=summary, **decision_tables(common))
 
 
 def save_tables(result: dict) -> None:
     out = ROOT / "data/processed"
     out.mkdir(parents=True, exist_ok=True)
-    for name in ["daily", "common", "derived", "audit", "monthly", "weekday", "correlations", "periods"]:
+    for name in ["daily", "common", "derived", "audit", "monthly", "weekday", "correlations", "periods",
+                 "persistence", "surge_windows", "september_phases"]:
         table = result[name].copy()
         if name in ["monthly", "weekday"]:
             table.columns = ["_".join(column) for column in table.columns]
             table.index.name = "month" if name == "monthly" else "weekday_0_Mon_6_Sun"
-        table.to_csv(out / f"{name}.csv", index=name not in ["audit", "correlations"], encoding="utf-8-sig", float_format="%.8f")
+        table.to_csv(out / f"{name}.csv", index=name not in ["audit", "correlations", "persistence", "surge_windows", "september_phases"], encoding="utf-8-sig", float_format="%.8f")
     (out / "summary.json").write_text(json.dumps(result["summary"], ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
 
 
@@ -274,6 +321,40 @@ def make_charts(result: dict):
     finish_chart(fig, "04_weekday_patterns.png", "04  |  Weekday averages hide large differences",
                  "2026-05-29 to 2026-10-13  /  Means, medians and sample sizes  /  Not an estimate of the best posting day")
 
+    fig, axes = plt.subplots(1, 3, figsize=(13, 8))
+    for ax, metric in zip(axes, ["views", "visits", "follows"]):
+        for i, (start, end) in enumerate([("2026-09-09", "2026-09-22"), ("2026-09-25", "2026-10-08")]):
+            values = common.loc[start:end, metric]
+            ax.scatter(i + np.linspace(-.13, .13, len(values)), values, s=32,
+                       color="#899bad" if i == 0 else COLORS[metric], alpha=.8)
+            ax.hlines(values.median(), i-.22, i+.22, color="#1e2b3b", lw=2.5)
+            ax.text(i+.24, values.median(), f"{values.median():,.1f}", fontsize=8, va="center")
+        ax.set(title=METRICS[metric][2], xticks=[0, 1], xticklabels=["Before\nSep 9-22", "After\nSep 25-Oct 8"],
+               xlim=(-.4, 1.85), ylim=(0, None), ylabel="Daily count")
+        ax.yaxis.set_major_formatter(FuncFormatter(compact_number))
+        ax.grid(axis="y", alpha=.4)
+    finish_chart(fig, "05_persistence.png", "05  |  The typical day improved after the peak",
+                 "Sep 23-24 excluded  /  Each dot is one day; dark line = median  /  14 days in each window")
+
+    episodes = result["surge_windows"].query("shift_days == 0").set_index("episode")
+    fig, axes = plt.subplots(2, 3, figsize=(13, 9))
+    columns = [("views_sum", "Views", "7-day total"), ("visits_sum", "Profile visits", "7-day total"),
+               ("follows_sum", "Follows", "7-day total"),
+               ("visits_per1000_views", "Visits / 1,000 views", "Ratio of period totals"),
+               ("follows_per100_visits", "Follows / 100 visits", "Ratio of period totals"),
+               ("follows_per1000_views", "Follows / 1,000 views", "Ratio of period totals")]
+    for ax, (column, title, unit) in zip(axes.flat, columns):
+        values = episodes.loc[["September", "October"], column].to_numpy()
+        bars = ax.bar([0, 1], values, color=["#27739a", "#d0843c"], width=.55)
+        ax.bar_label(bars, labels=[f"{v:,.0f}" if column.endswith("_sum") else f"{v:.2f}" for v in values], padding=5)
+        ax.set(title=f"{title}  ({(values[1]/values[0]-1)*100:+.1f}%)", ylabel=unit,
+               xticks=[0, 1], xticklabels=["Sep 23-29", "Oct 6-12"], ylim=(0, values.max()*1.25))
+        ax.yaxis.set_major_formatter(FuncFormatter(compact_number))
+        ax.set_axisbelow(True)
+        ax.grid(axis="y", alpha=.4)
+    finish_chart(fig, "06_surge_quality.png", "06  |  October: fewer follows for every 1,000 views",
+                 "Two 7-day case windows, each covering all weekdays  /  Aggregate ratios, not tracked user conversion")
+
 
 def markdown_table(headers, rows):
     return "\n".join(["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"] +
@@ -288,6 +369,34 @@ def build_report(result: dict):
     corr = result["correlations"]
     f = lambda x: f"{x:,.1f}"
     fields = dict(summary)
+    persistence = result["persistence"].set_index("metric")
+    fields["persistence_table"] = markdown_table(
+        ["지표", "직전 중앙값", "직후 중앙값", "중앙값 배율", "직전 상위 2일 제외 평균", "직후 상위 2일 제외 평균", "직후 14일 중 직전 중앙값 초과"],
+        [[METRICS[k][3], f(r.before_median), f(r.after_median), f"{r.after_median/r.before_median:.2f}배",
+          f(r.before_trim_top2_mean), f(r.after_trim_top2_mean), f"{int(r.after_days_above_before_median)}/14일"] for k, r in persistence.iterrows()])
+    surges = result["surge_windows"]
+    pair = surges.query("shift_days == 0").set_index("episode")
+    september, october = pair.loc["September"], pair.loc["October"]
+    fields["surge_table"] = markdown_table(["지표", "9/23~29", "10/6~12", "변화율"],
+        [[label, f(september[key]) if key.endswith("_sum") else f"{september[key]:.2f}",
+          f(october[key]) if key.endswith("_sum") else f"{october[key]:.2f}",
+          f"{(october[key]/september[key]-1)*100:+.1f}%"] for key, label in [
+              ("views_sum", "조회수 합계"), ("visits_sum", "방문 합계"), ("follows_sum", "팔로우 합계"),
+              ("visits_per1000_views", "조회수 1,000회당 방문"), ("follows_per100_visits", "방문 100회당 팔로우"),
+              ("follows_per1000_views", "조회수 1,000회당 팔로우")]])
+    fields["surge_sensitivity_table"] = markdown_table(["두 창의 이동", "9월 구간", "10월 구간", "조회수 1,000회당 팔로우 (9월 → 10월)", "비율 변화"],
+        [[f"{shift:+d}일", f"{a.start}~{a.end}", f"{b.start}~{b.end}",
+          f"{a.follows_per1000_views:.2f} → {b.follows_per1000_views:.2f}",
+          f"{(b.follows_per1000_views/a.follows_per1000_views-1)*100:+.1f}%"]
+         for shift in [-1, 0, 1] for a, b in [(surges.query("shift_days == @shift").iloc[0], surges.query("shift_days == @shift").iloc[1])]])
+    fields["september_table"] = markdown_table(["구간", "일수", "조회수 일평균", "조회수 중앙값", "팔로우 일평균"],
+        [[f"{r.start}~{r.end}", r.n, f(r.views_mean), f(r.views_median), f(r.follows_mean)] for r in result["september_phases"].itertuples()])
+    fields["surge_follow_drop"] = f"{(1-october.follows_per1000_views/september.follows_per1000_views)*100:.1f}"
+    fields["surge_ratio_sep"] = f"{september.follows_per1000_views:.2f}"
+    fields["surge_ratio_oct"] = f"{october.follows_per1000_views:.2f}"
+    fields["surge_trimmed_sep"] = f"{september.follows_per1000_views_without_top_view_day:.2f}"
+    fields["surge_trimmed_oct"] = f"{october.follows_per1000_views_without_top_view_day:.2f}"
+    fields["persistent_views_median_ratio"] = f"{persistence.loc['views', 'after_median']/persistence.loc['views', 'before_median']:.2f}"
     fields["coverage_table"] = markdown_table(["원본", "기간", "행 수", "빈 값", "0인 날", "높은 값 표시*"],
         [[a.file, f"{a.start}~{a.end}", a.rows, a.blank_values, a.zero_days, a.flagged_high_days] for a in result["audit"].itertuples()])
     fields["main_table"] = markdown_table(["지표", "공통 기간 합계", "일평균", "중앙값", "최고 기록 (날짜)"],
@@ -339,7 +448,7 @@ def main():
     make_charts(result)
     build_report(result)
     print(f"OK: {len(result['daily'])} calendar days; {len(result['common'])} complete comparison days.")
-    print("Generated 4 PNG charts, processed tables and REPORT.md.")
+    print("Generated 6 PNG charts, processed tables and REPORT.md.")
     print("Original files in data/raw were read only.")
 
 

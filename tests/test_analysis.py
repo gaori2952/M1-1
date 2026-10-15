@@ -69,6 +69,26 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(periods.loc[(14, "before", "views"), "n"], 14)
         self.assertEqual(periods.loc[(14, "after", "views"), "mean"], 10.)
 
+    def test_window_ratios_weight_by_volume_and_trim_each_metric(self):
+        frame = pd.DataFrame({"views": [100., 100., 100., 100., 1000.],
+                              "visits": [10., 10., 10., 10., 100.],
+                              "follows": [20., 3., 2., 1., 10.]},
+                             index=pd.date_range("2026-01-01", periods=5))
+        got = analysis.window_summary(frame, "2026-01-01", "2026-01-05")
+        self.assertAlmostEqual(got["follows_per1000_views"], 36 / 1400 * 1000)
+        # A large follows day need not be a large views day.
+        self.assertEqual(got["follows_trim_top2_mean"], 2.)
+        self.assertEqual(got["views_trim_top2_mean"], 100.)
+        self.assertAlmostEqual(got["follows_per1000_views_without_top_view_day"], 26 / 400 * 1000)
+
+    def test_window_refuses_calendar_gaps_and_keeps_zero_ratio_undefined(self):
+        frame = pd.DataFrame({"views": 0., "visits": 0., "follows": 0.},
+                             index=pd.date_range("2026-01-01", periods=5))
+        got = analysis.window_summary(frame, "2026-01-01", "2026-01-05")
+        self.assertTrue(np.isnan(got["follows_per1000_views"]))
+        with self.assertRaisesRegex(ValueError, "Incomplete"):
+            analysis.window_summary(frame.drop(frame.index[1]), "2026-01-01", "2026-01-05")
+
 
 if __name__ == "__main__":
     unittest.main()
