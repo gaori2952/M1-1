@@ -1,0 +1,13 @@
+﻿target,lag_days,sample,n,pearson,spearman
+visits,0,all,138,0.88554728,0.87919176
+visits,0,exclude_event,136,0.81751489,0.87378777
+visits,0,daily_difference,137,0.90272213,0.74743423
+visits,1,all,137,0.60836690,0.70581482
+visits,1,exclude_event,134,0.57568031,0.71381456
+visits,1,daily_difference,136,-0.02755301,0.00217552
+follows,0,all,138,0.74839872,0.80022741
+follows,0,exclude_event,136,0.60648880,0.79128772
+follows,0,daily_difference,137,0.75665164,0.56024832
+follows,1,all,137,0.54465233,0.70063650
+follows,1,exclude_event,134,0.44230506,0.70860512
+follows,1,daily_difference,136,0.11520511,0.09788345

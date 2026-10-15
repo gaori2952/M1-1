@@ -1,0 +1,76 @@
+{
+  "overall_start": "2026-05-29",
+  "overall_end": "2026-10-14",
+  "overall_days": 139,
+  "common_start": "2026-05-29",
+  "common_end": "2026-10-13",
+  "common_days": 138,
+  "metrics": {
+    "views": {
+      "daily_sum": 4667510.0,
+      "mean": 33822.536231884056,
+      "median": 17735.5,
+      "peak": 283550.0,
+      "peak_date": "2026-09-23",
+      "first28_mean": 23418.928571428572,
+      "last28_mean": 77838.64285714286,
+      "last28_without_event_mean": 63152.230769230766,
+      "top5_share_pct": 22.71101722331607
+    },
+    "viewers": {
+      "daily_sum": 1816068.0,
+      "mean": 13159.91304347826,
+      "median": 5864.0,
+      "peak": 113396.0,
+      "peak_date": "2026-09-23",
+      "first28_mean": 10855.0,
+      "last28_mean": 28310.75,
+      "last28_without_event_mean": 22482.076923076922,
+      "top5_share_pct": 23.451709957997167
+    },
+    "interactions": {
+      "daily_sum": 254656.0,
+      "mean": 1845.3333333333333,
+      "median": 956.0,
+      "peak": 20627.0,
+      "peak_date": "2026-09-23",
+      "first28_mean": 2232.6071428571427,
+      "last28_mean": 3268.785714285714,
+      "last28_without_event_mean": 2035.5,
+      "top5_share_pct": 25.82267843679316
+    },
+    "visits": {
+      "daily_sum": 137498.0,
+      "mean": 996.3623188405797,
+      "median": 713.0,
+      "peak": 5591.0,
+      "peak_date": "2026-09-24",
+      "first28_mean": 1258.3214285714287,
+      "last28_mean": 1770.642857142857,
+      "last28_without_event_mean": 1480.0384615384614,
+      "top5_share_pct": 14.73330521171217
+    },
+    "follows": {
+      "daily_sum": 22265.0,
+      "mean": 161.34057971014494,
+      "median": 109.0,
+      "peak": 1136.0,
+      "peak_date": "2026-09-24",
+      "first28_mean": 151.17857142857142,
+      "last28_mean": 247.75,
+      "last28_without_event_mean": 185.42307692307693,
+      "top5_share_pct": 20.372782393891757
+    },
+    "link_clicks": {
+      "daily_sum": 178.0,
+      "mean": 1.289855072463768,
+      "median": 0.0,
+      "peak": 171.0,
+      "peak_date": "2026-10-06",
+      "first28_mean": 0.0,
+      "last28_mean": 6.357142857142857,
+      "last28_without_event_mean": 6.846153846153846,
+      "top5_share_pct": 100.0
+    }
+  }
+}

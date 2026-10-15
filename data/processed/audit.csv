@@ -1,0 +1,7 @@
+﻿metric,file,title,rows,valid_values,blank_values,start,end,missing_dates_inside_range,zero_days,iqr_upper,flagged_high_days,sha256
+views,Views.csv,Views,139,139,0,2026-05-29,2026-10-14,0,0,91119.25000000,13,b6264a42fbf1bf82bacfb3aeff56c4dfc6374c8a8d109fcfe8a849035a794b4f
+viewers,Viewers.csv,Viewers,139,139,0,2026-05-29,2026-10-14,0,0,31885.00000000,16,18e596c9730be6e2f642bb1a3ed9a7d0a646cb9a55695dee26cb12dd277b0e7d
+interactions,Interactions.csv,Content interactions,139,139,0,2026-05-29,2026-10-14,0,0,4942.50000000,11,0bf8c3d90f0797c7e05b2c5e2a0010b1240e15a19134bf403c16ebe090ce061b
+visits,Visits.csv,Instagram profile visits,139,139,0,2026-05-29,2026-10-14,0,0,2884.75000000,6,7c52b9daace319f7cb04d78b920fc3c5493d49d60076cb1e19c7fead8428cde7
+follows,Follows.csv,Instagram follows,138,138,0,2026-05-29,2026-10-13,0,0,398.00000000,9,eeb4a0f34bd03ce46e28e2844995980870224861730835db05c78fa77b877948
+link_clicks,Link clicks.csv,Instagram link clicks,139,139,0,2026-05-29,2026-10-14,0,137,0.00000000,2,681eb4f00f74bb06d8f5ee1510f7c5345d4368babf735bf081f9a5c9297c7443
