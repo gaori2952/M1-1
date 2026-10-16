@@ -55,6 +55,27 @@ python -m unittest discover -s tests -v
 
 검증 환경은 Python 3.12.14다. 직접 의존성은 [requirements.txt](requirements.txt), 검증한 환경의 전체 버전은 [requirements-lock.txt](requirements-lock.txt)에 기록했다.
 
+## 폴더 구성
+
+M1-1/
+├── analysis.py                 # 분석 전체를 실행하는 단일 스크립트
+├── tests/
+│   └── test_analysis.py        # 결론을 바꿀 수 있는 실수를 막는 단위 테스트 10개
+├── templates/
+│   └── REPORT.template.md      # 리포트 문장 틀 ($변수 자리에 계산 결과가 들어감)
+├── data/
+│   ├── raw/                    # 입력: Instagram에서 내보낸 원본 CSV 6개 (UTF-16)
+│   ├── processed/              # 출력: 정제 데이터와 통계표 (analysis.py가 생성)
+│   └── context/README.md       # 게시물 사례 2개의 날짜·출처 기록
+├── images/
+│   ├── 01~06_*.png             # 출력: 분석 그래프 (analysis.py가 생성)
+│   └── context/                # 게시물 표지 캡처 2개 (직접 수집, 코드와 무관)
+├── REPORT.md                   # 출력: 분석 리포트 (analysis.py가 생성)
+├── DATA_SOURCE.md              # 데이터 출처·수집 방법·이용 범위
+├── VALIDATION.md               # 실행·검증 기록
+├── requirements.txt            # 직접 의존성 (pandas, numpy, matplotlib)
+└── requirements-lock.txt       # 검증한 환경의 전체 패키지 버전
+
 ## 파일 안내
 
 | 경로 | 내용 |
