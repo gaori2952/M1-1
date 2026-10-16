@@ -57,6 +57,7 @@ python -m unittest discover -s tests -v
 
 ## 폴더 구성
 
+```
 M1-1/
 ├── analysis.py                 # 분석 전체를 실행하는 단일 스크립트
 ├── tests/
@@ -75,6 +76,7 @@ M1-1/
 ├── VALIDATION.md               # 실행·검증 기록
 ├── requirements.txt            # 직접 의존성 (pandas, numpy, matplotlib)
 └── requirements-lock.txt       # 검증한 환경의 전체 패키지 버전
+```
 
 ## 파일 안내
 
